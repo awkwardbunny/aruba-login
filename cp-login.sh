@@ -7,7 +7,7 @@ USER="user"
 PASS="pass"
 
 # Make it run auto
-[ -z "$IFACE" ] && { echo "This script should be placed under /etc/network/if-up.d/" && exit 0; }
+[ -z "$IFACE" ] && { echo "This script should be placed under /etc/network/if-up.d/ (for linux)" && echo "or run it manually with the IFACE variable set to your wifi interface" && exit 0; }
 
 # Don't run on lo
 [ "$IFACE" != "lo" ] || exit 0
