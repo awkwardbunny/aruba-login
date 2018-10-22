@@ -6,24 +6,37 @@ SSID="cooper"
 USER="user"
 PASS="pass"
 
+# Make it run auto
 [ -z "$IFACE" ] && { echo "This script should be placed under /etc/network/if-up.d/" && exit 0; }
 
+# Don't run on lo
 [ "$IFACE" != "lo" ] || exit 0
 
+# Check if right network
 ESSID=$(iwconfig $IFACE | grep ESSID | cut -d":" -f2 | sed 's/^[^"]*"\|"[^"]*$//g')
 [ "$ESSID" = "$SSID" ] || { echo "Not running script. SSID: $ESSID Expected: $SSID" && exit 0; }
 
+# Parse command (login or logout)
 [ ! -z "$1" ] && command=$1
 [ -z "$command" ] && command="login"
 
+# If login
 if [ "$command" = "login" ]; then
+
+	# Check if logged in already
 	redir=$(curl -s http://detectportal.firefox.com/success.txt)
-	[[ $redir != "success" ]] || { echo "Not running script; already logged in to $SSID wifi." && exit 0; }
+	[[ $redir != "success" ]] || { echo "Not running script; already logged in" && exit 0; }
+
+	# If not, log in!
 	echo "Running login script for $SSID wifi."
 	result=$(curl -s "https://captiveportal-login.cooper.edu/cgi-bin/login?user=$USER&password=$PASS&cmd=authenticate")
+
 elif [ "$command" = "logout" ]; then
+
+	# Log out!
 	echo "Running logout script for $SSID wifi."
 	result=$(curl -s "https://captiveportal-login.cooper.edu/cgi-bin/login?cmd=logout")
+
 fi
 
 if [[ $result == *"Login incorrect"* ]]; then
@@ -32,21 +45,3 @@ else
 	msg=$(echo $result | grep -o '<b>.*</b>' | sed 's/\(<b>\|<\/b>\)//g')
 	echo $msg
 fi
-
-#url=$(echo $redir | grep url | sed 's/^.*\(url=\)//' | sed "s/'>$//g" | sed "s/'.*//g")
-#url=$(cat ../redirect | grep url | sed 's/^.*\(url=\)//' | sed "s/'>$//g")
-#echo $url
-
-#form=$(curl -skL $url)
-#echo $form
-
-#location=$(curl -sI $url | grep Location | cut -d ' ' -f 2)
-#echo $location
-
-# Parse returned data and submit form
-#result=$(curl -s --data "user=$USER&password=$PASS&cmd=authenticate&Login=Log+In" https://captiveportal-login.cooper.edu/cgi-bin/login)
-#echo $result
-#result=$(cat output.log)
-#echo $result
-
-#curl -s "https://captiveportal-login.cooper.edu/cgi-bin/login?user=$USER&password=$PASS&cmd=authenticate"
